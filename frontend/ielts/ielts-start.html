@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IELTS Simulator - Start</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/config.js"></script>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="logo">GlobalScholarAI</div>
+    <div class="nav-links">
+        <a href="../dashboard.html">Dashboard</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <h1 class="page-title">IELTS Academic Simulation</h1>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" style="width: 10%;"></div>
+    </div>
+
+    <div class="card">
+        <h3>About This Test</h3>
+        <br>
+        <p>This simulation includes:</p>
+        <br>
+        <ul>
+            <li>✔ Reading Test</li>
+            <li>✔ Writing Task 2</li>
+            <li>✔ Speaking (3 Part Simulation)</li>
+        </ul>
+        <br><br>
+
+        <button class="btn-primary" onclick="startReading()">
+            Start Reading Test
+        </button>
+    </div>
+
+</div>
+
+<script>
+function startReading() {
+    window.location.href = "ielts-reading.html";
+}
+</script>
+
+</body>
+</html>

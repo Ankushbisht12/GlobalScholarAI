@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IELTS Reading</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/config.js"></script>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="logo">GlobalScholarAI</div>
+    <div class="nav-links">
+        <a href="../dashboard.html">Dashboard</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <h1 class="page-title">IELTS Reading</h1>
+
+    <!-- ✅ Skip Button -->
+    <button class="btn-secondary"
+        onclick="skipSection('ielts-writing.html')" 
+        style="float:right; margin-bottom:10px;">
+        Skip This Section
+    </button>
+
+    <!-- Progress -->
+    <div class="progress-container">
+        <div class="progress-bar" style="width: 30%;"></div>
+    </div>
+
+    <div class="card">
+        <button class="btn-primary" onclick="loadReading()">
+            Generate Passage
+        </button>
+    </div>
+
+    <!-- ✅ Proper Loading -->
+    <div id="loading" style="display:none; margin-top:15px;">
+        <p>Checking your answers... Please wait ⏳</p>
+    </div>
+
+    <div id="reading-section" style="display:none;">
+
+        <div class="card">
+            <h3>Passage</h3>
+            <br>
+            <p id="passage-text"></p>
+        </div>
+
+        <div class="card">
+            <h3>Questions</h3>
+            <br>
+            <form id="reading-form"></form>
+            <br>
+            <button class="btn-primary" onclick="submitReading()">
+                Submit Answers
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+let questionsData = [];
+
+async function loadReading() {
+
+    const response = await fetch(`${API_BASE}/ielts/mcq/start`, {
+        method: "POST"
+    });
+
+    const data = await response.json();
+
+    document.getElementById("reading-section").style.display = "block";
+    document.getElementById("passage-text").innerText = data.passage;
+
+    questionsData = data.questions;
+
+    const form = document.getElementById("reading-form");
+    form.innerHTML = "";
+
+    questionsData.forEach((q, index) => {
+
+        let optionsHTML = "";
+
+        for (const key in q.options) {
+            optionsHTML += `
+                <div>
+                    <input type="radio" name="q${index}" value="${key}">
+                    ${key}. ${q.options[key]}
+                </div>
+            `;
+        }
+
+        const questionHTML = `
+            <div class="input-group">
+                <label>${index + 1}. ${q.question}</label>
+                ${optionsHTML}
+            </div>
+        `;
+
+        form.innerHTML += questionHTML;
+    });
+}
+
+async function submitReading() {
+
+    const answers = [];
+
+    questionsData.forEach((q, index) => {
+        const selected = document.querySelector(`input[name="q${index}"]:checked`);
+        answers.push(selected ? selected.value : "");
+    });
+
+    // ✅ Show loading
+    document.getElementById("loading").style.display = "block";
+
+    const response = await fetch(`${API_BASE}/ielts/mcq/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            answers: answers,
+            questions: questionsData
+        })
+    });
+
+    const result = await response.json();
+
+    // ✅ Hide loading
+    document.getElementById("loading").style.display = "none";
+
+    // ✅ Store reading band
+    if (result.estimated_reading_band) {
+        localStorage.setItem("reading_band", result.estimated_reading_band);
+    }
+
+    // Move to Writing
+    window.location.href = "ielts-writing.html";
+}
+
+function skipSection(nextPage) {
+    localStorage.setItem("reading_band", "Skipped");
+    window.location.href = nextPage;
+}
+
+</script>
+
+</body>
+</html>

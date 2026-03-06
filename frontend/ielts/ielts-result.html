@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IELTS Final Result</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/config.js"></script>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="logo">GlobalScholarAI</div>
+</div>
+
+<div class="container">
+
+    <h1 class="page-title">IELTS Final Result</h1>
+
+    <div class="card">
+        <h3>Section Scores</h3>
+        <br>
+        <div id="section-scores"></div>
+    </div>
+
+    <div class="card">
+        <h3>Overall Band Score</h3>
+        <br>
+        <h2 id="overall-band"></h2>
+    </div>
+
+    <div class="card">
+        <h3>AI Performance Summary</h3>
+        <br>
+        <div id="summary-loading" style="display:none;">
+            Generating AI feedback... ⏳
+        </div>
+        <div id="ai-summary"></div>
+    </div>
+
+    <div style="text-align:center; margin-top:30px;">
+    <button class="btn-primary" onclick="goToDashboard()">
+        Go to Dashboard
+    </button></div>
+
+</div>
+
+<script>
+
+window.onload = generateResult;
+
+async function generateResult() {
+
+    const reading = localStorage.getItem("reading_band");
+    const writing = localStorage.getItem("writing_band");
+    const speaking = localStorage.getItem("speaking_band");
+
+    let scoresHTML = "";
+    let numericScores = [];
+
+    function processSection(name, value) {
+
+        if (!value || value === "Skipped") {
+            scoresHTML += `<p><strong>${name}:</strong> Skipped</p>`;
+        } else {
+            scoresHTML += `<p><strong>${name}:</strong> ${value}</p>`;
+            numericScores.push(parseFloat(value));
+        }
+    }
+
+    processSection("Reading", reading);
+    processSection("Writing", writing);
+    processSection("Speaking", speaking);
+
+    document.getElementById("section-scores").innerHTML = scoresHTML;
+
+    let overall = "Not Available";
+
+    if (numericScores.length > 0) {
+        const avg = numericScores.reduce((a, b) => a + b, 0) / numericScores.length;
+        overall = (Math.round(avg * 2) / 2).toFixed(1);
+    }
+
+    document.getElementById("overall-band").innerText = overall;
+
+    if (overall !== "Not Available") {
+        generateAISummary(reading, writing, speaking, overall);
+    } else {
+        document.getElementById("ai-summary").innerText =
+            "Complete at least one section to receive AI feedback.";
+    }
+}
+
+async function generateAISummary(reading, writing, speaking, overall) {
+
+    document.getElementById("summary-loading").style.display = "block";
+
+    const response = await fetch(`${API_BASE}/ielts/performance-summary`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            reading: reading,
+            writing: writing,
+            speaking: speaking,
+            overall: overall
+        })
+    });
+
+    const result = await response.json();
+
+    document.getElementById("summary-loading").style.display = "none";
+
+    if (result.error) {
+        document.getElementById("ai-summary").innerText = result.raw_output;
+        return;
+    }
+
+    document.getElementById("ai-summary").innerHTML = `
+        <h4>📊 Performance Analysis</h4>
+        <p>${result.performance_analysis}</p>
+        <br>
+
+        <h4>🎓 University & Country Suggestions</h4>
+        <p>${result.university_suggestions}</p>
+        <br>
+
+        <h4>📌 Minimum Band Requirements</h4>
+        <p>${result.minimum_band_requirements}</p>
+        <br>
+
+        <h4>🧭 Admission Roadmap</h4>
+        <p>${result.admission_roadmap}</p>
+        <br>
+
+        <h4>📈 Section-wise Improvement Plan</h4>
+        <p>${result.improvement_plan}</p>
+        <br>
+
+        <h4>🚀 Estimated Real Exam Potential</h4>
+        <p>${result.exam_potential}</p>
+    `;
+}
+
+</script>
+
+<script>
+function goToDashboard() {
+    window.location.href = "../dashboard.html";
+}
+</script>
+
+</body>
+</html>

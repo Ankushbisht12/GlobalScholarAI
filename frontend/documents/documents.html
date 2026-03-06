@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Documents Generator</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/config.js"></script>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="logo">GlobalScholarAI</div>
+    <div class="nav-links">
+        <a href="../dashboard.html">Dashboard</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <h1 class="page-title">SOP & LOR Generator</h1>
+
+    <div class="card">
+        <h3>Enter Details</h3>
+
+        <label>Full Name:</label>
+        <input type="text" id="name">
+
+        <label>Course:</label>
+        <input type="text" id="course">
+
+        <label>Country:</label>
+        <input type="text" id="country">
+
+        <br><br>
+
+        <button class="btn-primary" onclick="generateSOP()">Generate SOP</button>
+        <button class="btn-primary" onclick="generateLOR()">Generate LOR</button>
+    </div>
+
+    <div id="document-result" style="display:none;">
+        <div class="card">
+            <h3>Generated Document</h3>
+            <div id="output"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+async function generateSOP() {
+
+    const response = await fetch(`${API_BASE}/documents/sop`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            name: document.getElementById("name").value,
+            field: document.getElementById("course").value,
+            country: document.getElementById("country").value,
+            academic_background: "Bachelor's in Computer Science",
+            experience: "Machine Learning projects and AI systems",
+            career_goals: "Become a Data Scientist",
+            why_country: "Germany has strong AI research and industry"
+        })
+    });
+
+    const result = await response.json();
+
+    document.getElementById("document-result").style.display = "block";
+    document.getElementById("output").innerText = result.sop;
+}
+
+async function generateLOR() {
+
+    const response = await fetch(`${API_BASE}/documents/lor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            type: "academic",
+            student_name: document.getElementById("name").value,
+            recommender_name: "Dr. Sharma",
+            duration: "2 years",
+            field: document.getElementById("course").value,
+            strengths: "Strong analytical thinking and ML skills",
+            achievements: "Built AI complaint routing system",
+            country: document.getElementById("country").value
+        })
+    });
+
+    const result = await response.json();
+
+    document.getElementById("document-result").style.display = "block";
+    document.getElementById("output").innerText = result.lor;
+}
+
+</script>
+
+</body>
+</html>

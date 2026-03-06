@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IELTS Writing</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/config.js"></script>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="logo">GlobalScholarAI</div>
+    <div class="nav-links">
+        <a href="../dashboard.html">Dashboard</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <h1 class="page-title">IELTS Writing Task 2</h1>
+
+    <!-- ✅ Correct Skip Button -->
+    <button class="btn-secondary"
+        onclick="skipSection('ielts-speaking.html')" 
+        style="float:right; margin-bottom:10px;">
+        Skip This Section
+    </button>
+
+    <!-- Progress -->
+    <div class="progress-container">
+        <div class="progress-bar" style="width: 60%;"></div>
+    </div>
+
+    <div class="card">
+        <h3>Essay Topic</h3>
+        <br>
+        <p id="essay-topic">Loading topic...</p>
+    </div>
+
+    <div class="card">
+        <h3>Your Essay (250–400 words)</h3>
+        <br>
+
+        <!-- ✅ Larger Professional Textarea -->
+        <textarea id="essay-input" 
+          style="width:100%; min-height:300px; padding:15px; font-size:15px; border-radius:10px; border:1px solid #ccc;"
+          oninput="updateWordCount()"></textarea>
+
+        <br><br>
+
+        <p><strong>Word Count:</strong> <span id="word-count">0</span></p>
+
+        <br>
+
+        <button class="btn-primary" onclick="submitEssay()">Submit Essay</button>
+    </div>
+
+    <!-- ✅ Loading Indicator -->
+    <div id="loading" style="display:none; margin-top:15px;">
+        <p>Evaluating your essay... Please wait ⏳</p>
+    </div>
+
+    <div id="result-section" style="display:none;">
+        <div class="card">
+            <h3>Writing Evaluation</h3>
+            <br>
+            <div id="writing-result"></div>
+            <br>
+            <button class="btn-primary" onclick="goToSpeaking()">
+                Continue to Speaking
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+window.onload = loadTopic;
+
+async function loadTopic() {
+
+    const response = await fetch(`${API_BASE}/ielts/writing/topic`, {
+        method: "POST"
+    });
+
+    const data = await response.json();
+
+    if (data.question) {
+        document.getElementById("essay-topic").innerText = data.question;
+    } else {
+        document.getElementById("essay-topic").innerText = "Failed to load topic.";
+    }
+}
+
+function updateWordCount() {
+    const text = document.getElementById("essay-input").value.trim();
+    const words = text === "" ? 0 : text.split(/\s+/).length;
+    document.getElementById("word-count").innerText = words;
+}
+
+async function submitEssay() {
+
+    const essay = document.getElementById("essay-input").value;
+    const wordCount = essay.trim() === "" ? 0 : essay.trim().split(/\s+/).length;
+
+    if (wordCount < 250) {
+        alert("Essay must be at least 250 words.");
+        return;
+    }
+
+    // ✅ Show loading
+    document.getElementById("loading").style.display = "block";
+
+    const response = await fetch(`${API_BASE}/ielts/writing/evaluate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ essay: essay })
+    });
+
+    const result = await response.json();
+
+    // ✅ Hide loading
+    document.getElementById("loading").style.display = "none";
+
+    // ✅ Store band for result page
+    if (result.overall_band) {
+        localStorage.setItem("writing_band", result.overall_band);
+    }
+
+    document.getElementById("result-section").style.display = "block";
+
+    document.getElementById("writing-result").innerHTML = `
+        <p><strong>Overall Band:</strong> ${result.overall_band}</p>
+        <p><strong>Task Response:</strong> ${result.task_response}</p>
+        <p><strong>Coherence & Cohesion:</strong> ${result.coherence}</p>
+        <p><strong>Lexical Resource:</strong> ${result.lexical_resource}</p>
+        <p><strong>Grammar:</strong> ${result.grammar}</p>
+        <br>
+        <p><strong>Word Count:</strong> ${result.word_count}</p>
+        <br>
+        <p><strong>Strengths:</strong><br>${result.strengths}</p>
+        <br>
+        <p><strong>Weaknesses:</strong><br>${result.weaknesses}</p>
+        <br>
+        <p><strong>Improvement Suggestions:</strong><br>${result.improvement_suggestions}</p>
+    `;
+}
+
+function goToSpeaking() {
+    window.location.href = "ielts-speaking.html";
+}
+
+function skipSection(nextPage) {
+    // ✅ Store skipped
+    localStorage.setItem("writing_band", "Skipped");
+    window.location.href = nextPage;
+}
+
+</script>
+
+</body>
+</html>

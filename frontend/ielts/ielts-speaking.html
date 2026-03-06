@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IELTS Speaking</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/config.js"></script>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="logo">GlobalScholarAI</div>
+    <div class="nav-links">
+        <a href="../dashboard.html">Dashboard</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <h1 class="page-title">IELTS Speaking Test</h1>
+
+    <!-- ✅ Correct Skip Button -->
+    <button class="btn-secondary"
+        onclick="skipSection('ielts-result.html')" 
+        style="float:right; margin-bottom:10px;">
+        Skip This Section
+    </button>
+
+    <!-- Progress -->
+    <div class="progress-container">
+        <div class="progress-bar" style="width: 80%;"></div>
+    </div>
+
+    <div class="card">
+        <h3>Examiner</h3>
+        <br>
+        <p id="question-box">Click Start to begin speaking test.</p>
+        <br>
+        <button class="btn-primary" onclick="startSpeaking()">Start Test</button>
+    </div>
+
+    <div class="card">
+        <h3>Your Response</h3>
+        <br>
+        <p id="transcript-box">Waiting for response...</p>
+        <br>
+        <button class="btn-primary" onclick="startRecording()">🎙 Speak</button>
+    </div>
+
+    <div id="final-result" style="display:none;">
+        <div class="card">
+            <h3>Speaking Evaluation</h3>
+            <div id="speaking-result"></div>
+            <br>
+            <button class="btn-primary" onclick="goToResult()">
+                View Final Result
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+let sessionId = null;
+let recognition;
+
+async function startSpeaking() {
+
+    const response = await fetch(`${API_BASE}/ielts/speaking/start`, {
+        method: "POST"
+    });
+
+    const data = await response.json();
+
+    sessionId = data.session_id;
+
+    document.getElementById("question-box").innerText = data.question;
+    speakText(data.question);
+}
+
+function speakText(text) {
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.lang = "en-US";
+    window.speechSynthesis.speak(speech);
+}
+
+function startRecording() {
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+        alert("Speech recognition not supported in this browser.");
+        return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+
+    recognition.start();
+
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById("transcript-box").innerText = transcript;
+        sendResponse(transcript);
+    };
+
+    recognition.onerror = function() {
+        alert("Microphone access denied or not supported.");
+    };
+}
+
+async function sendResponse(answer) {
+
+    const response = await fetch(`${API_BASE}/ielts/speaking/respond`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            session_id: sessionId,
+            answer: answer
+        })
+    });
+
+    const data = await response.json();
+
+    // ✅ If evaluation JSON returned (has overall_band)
+    if (data.overall_band) {
+
+        // Store speaking band
+        localStorage.setItem("speaking_band", data.overall_band);
+
+        document.getElementById("final-result").style.display = "block";
+
+        document.getElementById("speaking-result").innerHTML = `
+            <p><strong>Overall Band:</strong> ${data.overall_band}</p>
+            <p><strong>Fluency & Coherence:</strong> ${data.fluency}</p>
+            <p><strong>Lexical Resource:</strong> ${data.lexical_resource}</p>
+            <p><strong>Grammar:</strong> ${data.grammar}</p>
+            <p><strong>Pronunciation:</strong> ${data.pronunciation}</p>
+            <br>
+            <p><strong>Strengths:</strong><br>${data.strengths}</p>
+            <br>
+            <p><strong>Weaknesses:</strong><br>${data.weaknesses}</p>
+            <br>
+            <p><strong>Improvement Suggestions:</strong><br>${data.improvement_suggestions}</p>
+        `;
+
+    } else {
+        // Continue asking next question
+        document.getElementById("question-box").innerText = data.question;
+        speakText(data.question);
+    }
+}
+
+function goToResult() {
+    window.location.href = "ielts-result.html";
+}
+
+function skipSection(nextPage) {
+    localStorage.setItem("speaking_band", "Skipped");
+    window.location.href = nextPage;
+}
+
+</script>
+
+</body>
+</html>

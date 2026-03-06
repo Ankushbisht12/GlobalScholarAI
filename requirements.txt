@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+python-dotenv
+pydantic
+scikit-learn
+pandas
+numpy
+sentence-transformers
+faiss-cpu
+google-genai
+groq
+openai-whisper
+torch
