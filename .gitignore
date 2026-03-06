@@ -31,3 +31,11 @@ node_modules/
 
 # Dataset backups
 *.csv~
+
+test_admission.py
+
+test_ielts.py
+
+test_matcher.py
+
+test_scholarship.py
